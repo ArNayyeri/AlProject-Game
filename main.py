@@ -15,7 +15,6 @@ if __name__ == "__main__":
     while True:
         action = white_player.get_best_action(opponent=black_player)
         white_player.play(action)
-        board.states.append(board.get_state())
         board.print_map()
         print(
             f"white: {action}, evaluation: {white_player.evaluate(opponent=black_player):.2f}, left walls: {white_player.walls_count}"
@@ -25,10 +24,9 @@ if __name__ == "__main__":
             break
         if action.split("#")[0] == "wall":
             walls_count += 1
-        #sleep(0.3)
+        sleep(0.3)
         action = black_player.get_best_action(opponent=white_player)
         black_player.play(action)
-        board.states.append(board.get_state())
         board.print_map()
         print(
             f"black: {action}, evaluation: {black_player.evaluate(opponent=white_player):.2f}, left walls: {black_player.walls_count}"
@@ -39,6 +37,5 @@ if __name__ == "__main__":
 
         if action.split("#")[0] == "wall":
             walls_count += 1
-        #sleep(0.3)
+        sleep(0.3)
     print(f"walls count {walls_count}")
-

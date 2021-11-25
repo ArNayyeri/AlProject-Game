@@ -3,21 +3,18 @@ from copy import deepcopy
 
 
 class MiniMaxPlayer(Player):
-    MAX_DEPTH = 2
+    MAX_DEPTH = 1
     INFINITY = 9999
 
     def max_value(self, opponent, alpha: int, beta: int, depth: int):
         if self.is_winner():
             return self.MAX_DEPTH - depth, None
-        if depth == 1:
+        if depth == 0:
             return self.evaluate(opponent), None
         v = -self.INFINITY
         act = None
         for action in self.get_legal_actions(opponent):
             self.play(action, is_evaluating=True)
-            if self.board.states.__contains__(self.board.get_state()):
-                self.undo_last_action()
-                continue
             r = opponent.min_value(self, alpha, beta, depth - 1)
             if v < r[0]:
                 v = r[0]
@@ -32,15 +29,12 @@ class MiniMaxPlayer(Player):
     def min_value(self, opponent, alpha: int, beta: int, depth: int):
         if self.is_winner():
             return self.MAX_DEPTH - depth, None
-        if depth == 1:
+        if depth == 0:
             return self.evaluate(opponent), None
         v = self.INFINITY
         act = None
         for action in self.get_legal_actions(opponent):
             self.play(action, is_evaluating=True)
-            if self.board.states.__contains__(self.board.get_state()):
-                self.undo_last_action()
-                continue
             r = opponent.max_value(self, alpha, beta, depth - 1)
             if v > r[0]:
                 v = r[0]
@@ -97,7 +91,7 @@ class MiniMaxPlayer(Player):
 
     def evaluate(self, opponent):
         self_distance, opponent_distance = self.bfs(opponent)
-        if self.MAX_DEPTH % 2 == 0:
+        if self.MAX_DEPTH % 2 == 1:
             total_score = self_distance - opponent_distance
         else:
             total_score = opponent_distance - self_distance
