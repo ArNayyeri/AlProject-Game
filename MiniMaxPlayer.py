@@ -6,6 +6,52 @@ class MiniMaxPlayer(Player):
     MAX_DEPTH = 2
     INFINITY = 9999
 
+    def max_value(self, opponent, alpha: int, beta: int, depth: int):
+        if self.is_winner():
+            return self.MAX_DEPTH - depth, None
+        if depth == 1:
+            return self.evaluate(opponent), None
+        v = -self.INFINITY
+        act = None
+        for action in self.get_legal_actions(opponent):
+            self.play(action, is_evaluating=True)
+            if self.board.states.__contains__(self.board.get_state()):
+                self.undo_last_action()
+                continue
+            r = opponent.min_value(self, alpha, beta, depth - 1)
+            if v < r[0]:
+                v = r[0]
+                act = action
+            if v >= beta:
+                self.undo_last_action()
+                return v, act
+            alpha = max(alpha, v)
+            self.undo_last_action()
+        return v, act
+
+    def min_value(self, opponent, alpha: int, beta: int, depth: int):
+        if self.is_winner():
+            return self.MAX_DEPTH - depth, None
+        if depth == 1:
+            return self.evaluate(opponent), None
+        v = self.INFINITY
+        act = None
+        for action in self.get_legal_actions(opponent):
+            self.play(action, is_evaluating=True)
+            if self.board.states.__contains__(self.board.get_state()):
+                self.undo_last_action()
+                continue
+            r = opponent.max_value(self, alpha, beta, depth - 1)
+            if v > r[0]:
+                v = r[0]
+                act = action
+            if v <= alpha:
+                self.undo_last_action()
+                return v, act
+            beta = min(beta, v)
+            self.undo_last_action()
+        return v, act
+
     def bfs(self, opponent: Player):
         for player in [self, opponent]:
             destination = (
@@ -51,26 +97,12 @@ class MiniMaxPlayer(Player):
 
     def evaluate(self, opponent):
         self_distance, opponent_distance = self.bfs(opponent)
-        total_score = (5 * opponent_distance - self_distance) * (
-            1 + self.walls_count / 2
-        )
+        if self.MAX_DEPTH % 2 == 0:
+            total_score = self_distance - opponent_distance
+        else:
+            total_score = opponent_distance - self_distance
         return total_score
 
     def get_best_action(self, opponent):
-        best_action_value = -self.INFINITY
-        best_action = None
-        for action in self.get_legal_actions(opponent):
-            self.play(action, is_evaluating=True)
-            if self.is_winner():
-                self.undo_last_action()
-                return action
-
-            action_value = self.evaluate(opponent)
-            if action_value > best_action_value:
-                best_action_value = action_value
-                best_action = action
-
-            self.undo_last_action()
-
+        best_action_value, best_action = self.max_value(opponent, -self.INFINITY, self.INFINITY, self.MAX_DEPTH)
         return best_action
-
