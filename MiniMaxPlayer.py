@@ -7,62 +7,70 @@ class MiniMaxPlayer(Player):
     INFINITY = 9999
     states = {}
 
-    def max_value(self, opponent, alpha: int, beta: int, depth: int):
+    def max_value(self, opponent, alpha: int, beta: int, depth: int, limit: int = INFINITY):
         if self.is_winner():
             return self.MAX_DEPTH - depth, None
         if depth == 0:
             return self.evaluate(opponent), None
         v = -self.INFINITY
         act = None
+        l = limit
         for action in self.get_legal_actions(opponent):
-            iscal = False
+            iscalculate = False
             if self.states.__contains__(action + '$$$' + self.board.get_state()):
                 if self.states[action][0] == depth:
                     r = self.states[action + '$$$' + self.board.get_state()][1]
-                    iscal = True
-            if not iscal:
+                    iscalculate = True
+            if not iscalculate:
                 self.play(action, is_evaluating=True)
-                r = opponent.min_value(self, alpha, beta, depth - 1)
+                r = opponent.min_value(self, alpha, beta, depth - 1, limit=limit)
                 self.states[action + '$$$' + self.board.get_state()] = [depth, r]
             if v < r[0]:
                 v = r[0]
                 act = action
             if v >= beta:
-                if not iscal:
+                if not iscalculate:
                     self.undo_last_action()
                 return v, act
             alpha = max(alpha, v)
-            if not iscal:
+            if not iscalculate:
                 self.undo_last_action()
+            l -= 1
+            if l <= 0:
+                break
         return v, act
 
-    def min_value(self, opponent, alpha: int, beta: int, depth: int):
+    def min_value(self, opponent, alpha: int, beta: int, depth: int, limit: int = INFINITY):
         if self.is_winner():
             return self.MAX_DEPTH - depth, None
         if depth == 0:
             return self.evaluate(opponent), None
         v = self.INFINITY
         act = None
+        l = limit
         for action in self.get_legal_actions(opponent):
-            iscal = False
+            iscalculate = False
             if self.states.__contains__(action + '$$$' + self.board.get_state()):
                 if self.states[action][0] == depth:
                     r = self.states[action + '$$$' + self.board.get_state()][1]
-                    iscal = True
-            if not iscal:
+                    iscalculate = True
+            if not iscalculate:
                 self.play(action, is_evaluating=True)
-                r = opponent.max_value(self, alpha, beta, depth - 1)
+                r = opponent.max_value(self, alpha, beta, depth - 1, limit=limit)
                 self.states[action + '$$$' + self.board.get_state()] = [depth, r]
             if v > r[0]:
                 v = r[0]
                 act = action
             if v <= alpha:
-                if not iscal:
+                if not iscalculate:
                     self.undo_last_action()
                 return v, act
             beta = min(beta, v)
-            if not iscal:
+            if not iscalculate:
                 self.undo_last_action()
+            l -= 1
+            if l <= 0:
+                break
         return v, act
 
     def bfs(self, opponent: Player):
