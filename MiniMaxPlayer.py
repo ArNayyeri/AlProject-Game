@@ -3,8 +3,9 @@ from copy import deepcopy
 
 
 class MiniMaxPlayer(Player):
-    MAX_DEPTH = 1
+    MAX_DEPTH = 2
     INFINITY = 9999
+    states = {}
 
     def max_value(self, opponent, alpha: int, beta: int, depth: int):
         if self.is_winner():
@@ -14,16 +15,25 @@ class MiniMaxPlayer(Player):
         v = -self.INFINITY
         act = None
         for action in self.get_legal_actions(opponent):
-            self.play(action, is_evaluating=True)
-            r = opponent.min_value(self, alpha, beta, depth - 1)
+            iscal = False
+            if self.states.__contains__(action + '$$$' + self.board.get_state()):
+                if self.states[action][0] == depth:
+                    r = self.states[action + '$$$' + self.board.get_state()][1]
+                    iscal = True
+            if not iscal:
+                self.play(action, is_evaluating=True)
+                r = opponent.min_value(self, alpha, beta, depth - 1)
+                self.states[action + '$$$' + self.board.get_state()] = [depth, r]
             if v < r[0]:
                 v = r[0]
                 act = action
             if v >= beta:
-                self.undo_last_action()
+                if not iscal:
+                    self.undo_last_action()
                 return v, act
             alpha = max(alpha, v)
-            self.undo_last_action()
+            if not iscal:
+                self.undo_last_action()
         return v, act
 
     def min_value(self, opponent, alpha: int, beta: int, depth: int):
@@ -34,16 +44,25 @@ class MiniMaxPlayer(Player):
         v = self.INFINITY
         act = None
         for action in self.get_legal_actions(opponent):
-            self.play(action, is_evaluating=True)
-            r = opponent.max_value(self, alpha, beta, depth - 1)
+            iscal = False
+            if self.states.__contains__(action + '$$$' + self.board.get_state()):
+                if self.states[action][0] == depth:
+                    r = self.states[action + '$$$' + self.board.get_state()][1]
+                    iscal = True
+            if not iscal:
+                self.play(action, is_evaluating=True)
+                r = opponent.max_value(self, alpha, beta, depth - 1)
+                self.states[action + '$$$' + self.board.get_state()] = [depth, r]
             if v > r[0]:
                 v = r[0]
                 act = action
             if v <= alpha:
-                self.undo_last_action()
+                if not iscal:
+                    self.undo_last_action()
                 return v, act
             beta = min(beta, v)
-            self.undo_last_action()
+            if not iscal:
+                self.undo_last_action()
         return v, act
 
     def bfs(self, opponent: Player):
@@ -62,8 +81,7 @@ class MiniMaxPlayer(Player):
 
             player_piece = self.board.get_piece(*player.get_position())
 
-            queue = []
-            queue.append(player_piece)
+            queue = [player_piece]
             visited[player_piece] = True
             distances[player_piece] = 0
 
@@ -71,7 +89,7 @@ class MiniMaxPlayer(Player):
                 piece = queue.pop(0)
 
                 for i in self.board.get_piece_neighbors(piece):
-                    if visited[i] == False:
+                    if not visited[i]:
                         distances[i] = distances[piece] + 1
                         visited[i] = True
                         queue.append(i)
@@ -98,5 +116,4 @@ class MiniMaxPlayer(Player):
         return total_score
 
     def get_best_action(self, opponent):
-        best_action_value, best_action = self.max_value(opponent, -self.INFINITY, self.INFINITY, self.MAX_DEPTH)
-        return best_action
+        return self.max_value(opponent, -self.INFINITY, self.INFINITY, self.MAX_DEPTH)
